@@ -49,9 +49,24 @@ router.post('/', function(req, res){
   timesHTML.forEach(function pushlikeNames(element, index, array){
     	timesString.push(element.match(/\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/)[0]);
   });
-  console.log(timesString);  
+  //console.log(timesString);  
   //-------------------------//
 
+  //----時間・投稿者・いいね・推しキャラでjsonをつくる----------//
+  var charaJsons = Array();
+  for(var i=0; i<timesString.length; i++){
+  	var charaJson = new Object();
+  	charaJson['time'] = timesString[i];
+  	charaJson['character'] = 'マリオ';
+  	charaJson['presenter'] = presenterName[i];
+  	charaJson['follower'] = likeName[charaJson['presenter']];
+  	charaJsons.push(charaJson);
+  }
+   //console.log(charaJsons);
+  //------------------------//
+
+  //DBにいれる
+  //--
 
   res.render('index', { title: 'Express' });
 });
