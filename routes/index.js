@@ -24,6 +24,7 @@ router.post('/', function(req, res){
   //console.log(presenterName);
   //-----------------//
   
+  
   //----いいねした人と数の抽出-----//
   var likeNamesHTML = HTMLtext.match(/<a href="\?ps=tweet-good-members\&amp[\s\S]*?(<\/[aA])/g);
   var likeNamesString = Array();
@@ -37,8 +38,18 @@ router.post('/', function(req, res){
   	var keyName = presenterName[i];
   	likeName[keyName] = likeNamesString[i].split('　');
   }
-  console.log(likeName);  
+  //console.log(likeName);  
+  //-------------------------//
 
+
+  //----投稿時間の抽出-----//
+  var timesHTML = HTMLtext.match(/<li style="font-size:10px\;">2016-[\s\S]*?(<\/li)/g);
+  var timesString = Array();
+
+  timesHTML.forEach(function pushlikeNames(element, index, array){
+    	timesString.push(element.match(/\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/)[0]);
+  });
+  console.log(timesString);  
   //-------------------------//
 
 
