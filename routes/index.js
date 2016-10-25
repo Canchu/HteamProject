@@ -24,6 +24,23 @@ router.post('/', function(req, res){
   //console.log(presenterName);
   //-----------------//
   
+  //----いいねした人と数の抽出-----//
+  var likeNamesHTML = HTMLtext.match(/<a href="\?ps=tweet-good-members\&amp[\s\S]*?(<\/[aA])/g);
+  var likeNamesString = Array();
+  var likeName = Object();
+
+  likeNamesHTML.forEach(function pushlikeNames(element, index, array){
+    	likeNamesString.push(element.match(/([^\x01-\x7E]).*([^\x01-\x7E])|Cardona Luis/g)[0]);
+  });
+
+  for(var i=0; i<likeNamesString.length; i++){
+  	var keyName = presenterName[i];
+  	likeName[keyName] = likeNamesString[i].split('　');
+  }
+  console.log(likeName);  
+
+  //-------------------------//
+
 
   res.render('index', { title: 'Express' });
 });
