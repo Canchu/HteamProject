@@ -14,13 +14,16 @@ router.post('/', function(req, res){
   }
   //console.log("HTMLText:" + HTMLtext);
 
+  //----名前の抽出-----//
   var presenterNameHTML = HTMLtext.match(/<a href="\?ps=user-info\&amp[\s\S]*?(<\/[aA])/g);
   var presenterName = Array();
 
   presenterNameHTML.forEach(function pushName(element, index, array){
     	presenterName.push(element.match(/([^\x01-\x7E]).*([^\x01-\x7E])|Cardona Luis/)[0]);
   });
-  console.log(presenterName);
+  //console.log(presenterName);
+  //-----------------//
+  
 
   res.render('index', { title: 'Express' });
 });
