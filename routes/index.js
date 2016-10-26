@@ -67,7 +67,7 @@ router.post('/', function(req, res){
   	var charaJson = new Object();
     var cnt = 0;
   	charaJson['time'] = timesString[i];
-  	charaJson['character'] = 'ルイージ';
+  	charaJson['character'] = 'ピーチ';
   	charaJson['presenter'] = presenterNames[i];
     charaJson['follower'] = likeName[charaJson['presenter']];
     if(charaJson['follower'] != undefined) cnt = charaJson['follower'].length;
@@ -82,6 +82,11 @@ router.post('/', function(req, res){
     p = p.then(makePromiseFunc(i, charaJsons)); 
   } 
   p.then(function() { 
+      //キャラスコアテーブルの更新
+      var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
+      pool.query(characterQuery, function (err, rows) {
+             if (err) return next(err);
+      });
       res.render('index', { title: 'Express' });
   });
   //-----------------------//
