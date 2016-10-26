@@ -1,0 +1,21 @@
+INSERT INTO characterScore(Ncharacter) SELECT Ncharacter FROM posts GROUP BY Ncharacter
+
+INSERT INTO characterScore(Ncharacter,score) SELECT Ncharacter,COUNT(Ncharacter)*3 FROM posts GROUP BY Ncharacter;
+
+
+
+キャラクタスコアの更新・新規登録もかねる
+INSERT INTO characterScore (Ncharacter,score)
+SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t
+ON DUPLICATE KEY UPDATE score = t.score;
+
+
+SELECT presenter from post where Ncharacter = t.Ncharacter (SELECT Ncharacter FROM posts GROUP BY Ncharacter)t;
+
+
+
+name    chara score
+正木絢乃　マリオ　9
+
+
+ SELECT presenter, Ncharacter, COUNT(presenter)*3 FROM posts GROUP BY presenter order by Ncharacter;
