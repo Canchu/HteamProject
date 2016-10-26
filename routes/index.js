@@ -24,10 +24,13 @@ router.post('/', function(req, res){
   var presenterNames = Array();
   presenterNameHTML.forEach(function pushName(element, index, array){
     	var name = element.match(/([^\x01-\x7E]).*([^\x01-\x7E])|Cardona Luis/)[0];
-      if(name == undefined) res.render('error', { message: 'presenter null' }); return;
+      if(name == undefined){
+        res.render('error', { message: 'presenter null' });
+        return;
+      }
       presenterNames.push(name);
   });
-  //console.log(presenterName);
+  //console.log(presenterNames);
   //-----------------//
   
   
@@ -62,16 +65,18 @@ router.post('/', function(req, res){
   var charaJsons = Array();
   for(var i=0; i<timesString.length; i++){
   	var charaJson = new Object();
+    var cnt = 0;
   	charaJson['time'] = timesString[i];
-  	charaJson['character'] = 'マリオ';
+  	charaJson['character'] = 'ルイージ';
   	charaJson['presenter'] = presenterNames[i];
-  	charaJson['follower'] = likeName[charaJson['presenter']];
-  	charaJsons.push(charaJson);
+    charaJson['follower'] = likeName[charaJson['presenter']];
+    if(charaJson['follower'] != undefined) cnt = charaJson['follower'].length;
+    charaJson['followercnt'] = cnt;
+    charaJsons.push(charaJson);
   }
    //console.log(charaJsons);
-  //------------------------//
+  //-------------------------------------------------//
 
-  //DBにいれる
   var p = new Promise(function(res) { res(); });
   for(var i = 0; i < charaJsons.length; i++) {
     p = p.then(makePromiseFunc(i, charaJsons)); 
@@ -89,13 +94,15 @@ function makePromiseFunc(index, charaJsons){
          var searchTimeQuery = 'select time from posts where time="%s"'.replace(/%s/, time);
          pool.query(searchTimeQuery, function (err, rows) {
            if (err) return next(err);
+
            if(rows.length>0){ //既にDBに入っているときいいねを更新するだけ
-             query = 'update posts set follower="%s" where time = "%t"';
+             query = 'update posts set follower="%s",followerCnt ="%d" where time = "%t"';
              query = query.replace(/%t/, time);
+             query = query.replace(/%d/, charaJsons[index]['followercnt']);
              query = query.replace(/%s/, charaJsons[index]['follower']);
            }
            else{ //新規登録のとき全てをinsert
-             var query = 'insert into posts values ("%s","%s","%s","%s")';
+             var query = 'insert into posts values ("%s","%s","%s","%s","%s")';
              for(var key in charaJsons[index]) query = query.replace(/%s/, charaJsons[index][key]);
            }
            pool.query(query, function (err, rows) {
