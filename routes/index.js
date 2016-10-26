@@ -26,7 +26,6 @@ router.post('/', function(req, res){
     	var name = element.match(/([^\x01-\x7E]).*([^\x01-\x7E])|Cardona Luis/)[0];
       if(name == undefined) res.render('error', { message: 'presenter null' }); return;
       presenterNames.push(name);
-      console.log(name);
   });
   //console.log(presenterName);
   //-----------------//
@@ -101,7 +100,7 @@ function makePromiseFunc(index, charaJsons){
            }
            pool.query(query, function (err, rows) {
              if (err) return next(err);
-             console.log(query);
+             //console.log(query);
              res();
            });
          });
