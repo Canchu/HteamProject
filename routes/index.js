@@ -18,6 +18,16 @@ router.post('/', function(req, res){
   //console.log(req.query); // for logging
   var HTMLtext = "";
   if (req.body.htmltext) HTMLtext = req.body.htmltext[0];
+  
+
+  //----投稿時間の抽出-----//
+  var timesHTML = HTMLtext.match(/<span id="tweet_good_\d{4}_count">[\s\S]*?(\d{2}<\/li)/g);
+  var timesString = Array();
+  timesHTML.forEach(function pushlikeNames(element, index, array){
+      timesString.push(element.match(/\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/)[0]);
+  });
+  //console.log(timesString);  
+  //-------------------------//
 
   //----名前の抽出-----//
   var presenterNameHTML = HTMLtext.match(/<h5\sclass="media-heading"><a\shref="\?ps=user-info\&amp[\s\S]*?(<\/[aA])/g);
@@ -32,10 +42,9 @@ router.post('/', function(req, res){
   });
   //console.log(presenterNames);
   //-----------------//
-  
-  
+
   //----いいねした人と数の抽出-----//
-  var likeNamesHTML = HTMLtext.match(/<a href="\?ps=tweet-good-members\&amp[\s\S]*?(<\/[aA])/g);
+  var likeNamesHTML = HTMLtext.match(/<a href="\?ps=tweet-good-members\&amp;id=\d{4}[\s\S]*?(<\/li)/g);
   var likeNamesString = Array();
   var likeName = Object();
 
@@ -45,21 +54,12 @@ router.post('/', function(req, res){
   });
 
   for(var i=0; i<likeNamesString.length; i++){
-  	var keyName = presenterNames[i];
+  	var keyName = timesString[i];
   	likeName[keyName] = likeNamesString[i].split('　');
   }
   //console.log(likeName);  
   //-------------------------//
 
-
-  //----投稿時間の抽出-----//
-  var timesHTML = HTMLtext.match(/<span id="tweet_good_\d{4}_count">[\s\S]*?(\d{2}<\/li)/g);
-  var timesString = Array();
-  timesHTML.forEach(function pushlikeNames(element, index, array){
-    	timesString.push(element.match(/\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/)[0]);
-  });
-  //console.log(timesString);  
-  //-------------------------//
 
   //----時間・投稿者・いいね・推しキャラでjsonをつくる----------//
   var charaJsons = Array();
@@ -67,9 +67,9 @@ router.post('/', function(req, res){
   	var charaJson = new Object();
     var cnt = 0;
   	charaJson['time'] = timesString[i];
-  	charaJson['character'] = 'ピーチ';
+  	charaJson['character'] = 'ルイージ';
   	charaJson['presenter'] = presenterNames[i];
-    charaJson['follower'] = likeName[charaJson['presenter']];
+    charaJson['follower'] = likeName[charaJson['time']];
     if(charaJson['follower'] != undefined) cnt = charaJson['follower'].length;
     charaJson['followercnt'] = cnt;
     charaJsons.push(charaJson);
