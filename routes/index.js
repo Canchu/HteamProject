@@ -1,5 +1,13 @@
 var express = require('express');
+var mysql = require('mysql');
 var router = express.Router();
+
+var pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASS || '',
+  database: process.env.DB_NAME || 'hteam_db'
+});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -66,10 +74,21 @@ router.post('/', function(req, res){
   //------------------------//
 
   //DBにいれる
-  //--
-
+  
+  for(var i = 0; i<charaJsons.length; i++){
+    var insertQuery = 'insert into posts values ("%s","%s","%s","%s")';
+    for(var key in charaJsons[i]){
+      var insertQuery = insertQuery.replace(/%s/, charaJsons[i][key]);
+    }
+    console.log(insertQuery);
+    pool.query(insertQuery, function (err, rows) {
+      if (err) return next(err);
+    });
+  }
   res.render('index', { title: 'Express' });
+  //-----------------------//
 });
+
 
 
 module.exports = router;
