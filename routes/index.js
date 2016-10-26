@@ -20,7 +20,7 @@ router.post('/', function(req, res){
   if (req.body.htmltext) HTMLtext = req.body.htmltext[0];
 
   //----名前の抽出-----//
-  var presenterNameHTML = HTMLtext.match(/<a href="\?ps=user-info\&amp[\s\S]*?(<\/[aA])/g);
+  var presenterNameHTML = HTMLtext.match(/<h5\sclass="media-heading"><a\shref="\?ps=user-info\&amp[\s\S]*?(<\/[aA])/g);
   var presenterNames = Array();
   presenterNameHTML.forEach(function pushName(element, index, array){
     	var name = element.match(/([^\x01-\x7E]).*([^\x01-\x7E])|Cardona Luis/)[0];
@@ -53,7 +53,7 @@ router.post('/', function(req, res){
 
 
   //----投稿時間の抽出-----//
-  var timesHTML = HTMLtext.match(/<li style="font-size:10px\;">2016-[\s\S]*?(<\/li)/g);
+  var timesHTML = HTMLtext.match(/<span id="tweet_good_\d{4}_count">[\s\S]*?(\d{2}<\/li)/g);
   var timesString = Array();
   timesHTML.forEach(function pushlikeNames(element, index, array){
     	timesString.push(element.match(/\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/)[0]);
@@ -74,7 +74,7 @@ router.post('/', function(req, res){
     charaJson['followercnt'] = cnt;
     charaJsons.push(charaJson);
   }
-   //console.log(charaJsons);
+   console.log(charaJsons);
   //-------------------------------------------------//
 
   var p = new Promise(function(res) { res(); });
