@@ -39,7 +39,8 @@ router.post('/', function(req, res){
   var likeName = Object();
 
   likeNamesHTML.forEach(function pushlikeNames(element, index, array){
-    	likeNamesString.push(element.match(/([^\x01-\x7E]).*([^\x01-\x7E])|Cardona Luis/g)[0]);
+      var name = element.match(/([^\x01-\x7E]).*([^\x01-\x7E])|Cardona Luis/g)[0];
+      if(name != "いいねがありません") likeNamesString.push(name);  //いいねが1つもついていなかったときスキップ 
   });
 
   for(var i=0; i<likeNamesString.length; i++){
