@@ -85,9 +85,9 @@ router.post('/', function(req, res){
       //キャラスコアテーブルの更新
       var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
       pool.query(characterQuery, function (err, rows) {
-             if (err) return next(err);
+        if (err) return next(err);
+        res.render('index', { title: 'Express' });
       });
-      res.render('index', { title: 'Express' });
   });
   //-----------------------//
 });
