@@ -74,20 +74,19 @@ router.post('/', function(req, res){
     charaJson['followercnt'] = cnt;
     charaJsons.push(charaJson);
   }
-   console.log(charaJsons);
-  //-------------------------------------------------//
+   //console.log(charaJsons);
 
+  //---------------------DB操作----------------------------//
   var p = new Promise(function(res) { res(); });
+  //総合テーブルの更新
   for(var i = 0; i < charaJsons.length; i++) {
-    p = p.then(makePromiseFunc(i, charaJsons)); 
+    p = p.then(makePromiseFunc(i, charaJsons));
   } 
-  p.then(function() { 
-      //キャラスコアテーブルの更新
-      var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
-      pool.query(characterQuery, function (err, rows) {
-        if (err) return next(err);
-        res.render('index', { title: 'Express' });
-      });
+  //キャラスコアテーブルの更新→いいねテーブルの更新→ランキングテーブルの更新
+  p.then(updateCharacterScore).then(updateFollowerInfo(charaJsons)).then(updateRanking);
+  p.then(function(){
+     //console.log("Done");
+     res.render('index', { title: 'Express' });
   });
   //-----------------------//
 });
@@ -112,12 +111,57 @@ function makePromiseFunc(index, charaJsons){
            }
            pool.query(query, function (err, rows) {
              if (err) return next(err);
-             //console.log(query);
              res();
            });
          });
       });
     };
  }
+
+//キャラスコアテーブルの更新
+function updateCharacterScore(){
+  　var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
+  　sendQuery(characterQuery);
+}
+
+function updateFollowerInfo(charaJsons){
+ var p = new Promise(function(res) { res(); });
+ for(var i = 0; i < charaJsons.length; i++) {
+   for(var j = 0; j < charaJsons[i]['follower'].length; j++){
+     p = p.then(followerPromiseFunc(i, j, charaJsons)); 
+   }
+ }
+}
+
+function followerPromiseFunc(idx, fidx, charaJsons){
+  return function(prevValue) {
+    return new Promise(function(res, rej) {
+      var name = (charaJsons[idx]['follower'])[fidx];
+      var query = 'insert into followerInfo(time, name, Ncharacter) values ("%t", "%fn", "%c") on duplicate key update time=time,name=name,Ncharacter=Ncharacter';
+      query = query.replace(/%t/, charaJsons[idx]['time']);
+      query = query.replace(/%fn/, name);
+      query = query.replace(/%c/, charaJsons[idx]['character']);
+      pool.query(query, function (err, rows) {
+        if (err) return next(err);
+        res();
+      });
+    });
+  };
+}
+
+function updateRanking(){
+  var p = new Promise(function(res) { res(); });
+  var resetRank = 'DELETE FROM ranking';
+  var insertP = 'INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter,COUNT(presenter)*3 as score, Ncharacter FROM posts GROUP BY presenter)p ON DUPLICATE KEY UPDATE score = p.score';
+  var insertF = 'INSERT INTO ranking(name, Ncharacter, score) select name, Ncharacter, score from (select name, count(name) as score, Ncharacter from followerInfo group by name, Ncharacter)f ON DUPLICATE KEY UPDATE score = f.score';
+  p.then(sendQuery(resetRank)).then(sendQuery(insertP)).then(sendQuery(insertF));
+}
+
+function sendQuery(query){
+　pool.query(query, function (err, rows) {
+    if (err) return next(err);
+    //console.log(query);
+  });
+}
 
 module.exports = router;
