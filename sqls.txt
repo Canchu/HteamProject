@@ -1,0 +1,25 @@
+[キャラクタスコアの更新・新規登録もかねる]
+INSERT INTO characterScore (Ncharacter,score)
+SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t
+ON DUPLICATE KEY UPDATE score = t.score;
+
+
+[followerInfoつくる]
+create table followerInfo(time datetime, name varchar(255), Ncharacter varchar(255), primary key(time, name));
+
+[followerInfo更新・新規登録]
+insert into followerInfo(time, name, Ncharacter) values ("%t", "%fn", "%c") on duplicate key update time=time,name=name,Ncharacter=Ncharacter
+
+
+[rankingつくる]
+create table ranking(name varchar(255), Ncharacter varchar(255), score int);
+
+[rankingテーブル更新]
+INSERT INTO ranking(name, Ncharacter, score) select name, Ncharacter, score from (select name, count(name) as score, Ncharacter from followerInfo group by name, Ncharacter)f ON DUPLICATE KEY UPDATE score = f.score;
+
+INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter,COUNT(presenter)*3 as score, Ncharacter FROM posts GROUP BY presenter)p ON DUPLICATE KEY UPDATE score = p.score;
+
+（rankingとりだすとき）
+select name, Ncharacter, SUM(score) as total from ranking group by name, Ncharacter order by Ncharacter,total desc;
+
+
