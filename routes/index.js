@@ -67,7 +67,7 @@ router.post('/', function(req, res){
   	var charaJson = new Object();
     var cnt = 0;
   	charaJson['time'] = timesString[i];
-  	charaJson['character'] = 'ルイージ';
+  	charaJson['character'] = 'クッパ';
   	charaJson['presenter'] = presenterNames[i];
     charaJson['follower'] = likeName[charaJson['time']];
     if(charaJson['follower'] != undefined) cnt = charaJson['follower'].length;
@@ -86,7 +86,7 @@ router.post('/', function(req, res){
   p.then(updateCharacterScore).then(updateFollowerInfo(charaJsons)).then(updateRanking);
   p.then(function(){
      //console.log("Done");
-     res.render('index', { title: 'Express' });
+     res.render('rankingView');
   });
   //-----------------------//
 });

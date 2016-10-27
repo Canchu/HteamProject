@@ -20,6 +20,6 @@ INSERT INTO ranking(name, Ncharacter, score) select name, Ncharacter, score from
 INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter,COUNT(presenter)*3 as score, Ncharacter FROM posts GROUP BY presenter)p ON DUPLICATE KEY UPDATE score = p.score;
 
 （rankingとりだすとき）
-select name, Ncharacter, SUM(score) as total from ranking group by name, Ncharacter order by Ncharacter,total desc;
+select name, SUM(score) as total from ranking group by name, Ncharacter order by Ncharacter,total desc;
 
 
