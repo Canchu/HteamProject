@@ -67,7 +67,7 @@ router.post('/', function(req, res){
   	var charaJson = new Object();
     var cnt = 0;
   	charaJson['time'] = timesString[i];
-  	charaJson['character'] = 'クッパ';
+  	charaJson['character'] = 'ピーチ';
   	charaJson['presenter'] = presenterNames[i];
     charaJson['follower'] = likeName[charaJson['time']];
     if(charaJson['follower'] != undefined) cnt = charaJson['follower'].length;
@@ -151,17 +151,26 @@ function followerPromiseFunc(idx, fidx, charaJsons){
 
 function updateRanking(){
   var p = new Promise(function(res) { res(); });
-  var resetRank = 'DELETE FROM ranking';
-  var insertP = 'INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter,COUNT(presenter)*3 as score, Ncharacter FROM posts GROUP BY presenter)p ON DUPLICATE KEY UPDATE score = p.score';
-  var insertF = 'INSERT INTO ranking(name, Ncharacter, score) select name, Ncharacter, score from (select name, count(name) as score, Ncharacter from followerInfo group by name, Ncharacter)f ON DUPLICATE KEY UPDATE score = f.score';
-  p.then(sendQuery(resetRank)).then(sendQuery(insertP)).then(sendQuery(insertF));
+  var queries = Array();
+  queries.push('DELETE FROM ranking');
+  queries.push('INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter,COUNT(presenter)*3 as score, Ncharacter FROM posts GROUP BY presenter)p ON DUPLICATE KEY UPDATE score = p.score');
+  queries.push('INSERT INTO ranking(name, Ncharacter, score) select name, Ncharacter, score from (select name, count(name) as score, Ncharacter from followerInfo group by name, Ncharacter)f ON DUPLICATE KEY UPDATE score = f.score');
+  for(var i = 0; i < 3; i++) {
+    p = p.then(sendQuery(queries[i]));
+  } 
+  //p.then(sendQuery(resetRank)).then(sendQuery(insertP)).then(sendQuery(insertF));
 }
 
 function sendQuery(query){
-　pool.query(query, function (err, rows) {
-    if (err) return next(err);
-    //console.log(query);
-  });
+  return function(prevValue) {
+    return new Promise(function(res, rej) {
+      pool.query(query, function (err, rows) {
+        if (err) return next(err);
+        //console.log(query);
+        res();
+      });
+    });
+  };
 }
 
 module.exports = router;
