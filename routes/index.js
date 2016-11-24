@@ -135,7 +135,6 @@ function makePromiseFunc(index, charaJsons){
 function updateCharacterScore(){
   　var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
   　sendQuery(characterQuery);
-   console.log("characterScore updated");
 }
 
 function updateFollowerInfo(charaJsons){
@@ -180,7 +179,7 @@ function sendQuery(query){
     return new Promise(function(res, rej) {
       pool.query(query, function (err, rows) {
         if (err) return next(err);
-        //console.log(query);
+        console.log(query);
         res();
       });
     });
