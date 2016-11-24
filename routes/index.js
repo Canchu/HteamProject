@@ -43,6 +43,19 @@ router.post('/', function(req, res){
   //console.log(presenterNames);
   //-----------------//
 
+ //--投票したキャラクター名の抽出----//
+  var characterHTML = HTMLtext.match(/([^\x01-\x7E]).*([^\x01-\x7E])|Cardona Luis/g);
+  var characterNames = Array();
+  characterNameHTML.forEach(function pushName(element, index, array){
+      var name = element[0];
+      console.log(name);
+      if(name == undefined){
+        res.render('error', { message: 'presenter null' });
+        return;
+      }
+      characterNames.push(name);
+  });
+
   //----いいねした人と数の抽出-----//
   var likeNamesHTML = HTMLtext.match(/<a href="\?ps=tweet-good-members\&amp;id=\d{4}[\s\S]*?(<\/li)/g);
   var likeNamesString = Array();
@@ -67,7 +80,7 @@ router.post('/', function(req, res){
   	var charaJson = new Object();
     var cnt = 0;
   	charaJson['time'] = timesString[i];
-  	charaJson['character'] = 'ピーチ';
+  	charaJson['character'] = characterNames[i];
   	charaJson['presenter'] = presenterNames[i];
     charaJson['follower'] = likeName[charaJson['time']];
     if(charaJson['follower'] != undefined) cnt = charaJson['follower'].length;
@@ -83,8 +96,8 @@ router.post('/', function(req, res){
     p = p.then(makePromiseFunc(i, charaJsons));
   } 
   //キャラスコアテーブルの更新→いいねテーブルの更新→ランキングテーブルの更新
-  p.then(updateCharacterScore).then(updateFollowerInfo(charaJsons)).then(updateRanking);
-  p.then(function(){
+  p.then(updateCharacterScore).then(updateFollowerInfo(charaJsons)).then(updateRanking).then(
+    function(){
      //console.log("Done");
      res.render('rankingView');
   });
@@ -122,6 +135,7 @@ function makePromiseFunc(index, charaJsons){
 function updateCharacterScore(){
   　var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
   　sendQuery(characterQuery);
+   console.log("characterScore updated");
 }
 
 function updateFollowerInfo(charaJsons){
