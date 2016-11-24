@@ -133,7 +133,7 @@ function makePromiseFunc(index, charaJsons){
 
 //キャラスコアテーブルの更新
 function updateCharacterScore(){
-  　var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
+  　var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*5 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
   　sendQuery(characterQuery);
 }
 
@@ -166,8 +166,9 @@ function updateRanking(){
   var p = new Promise(function(res) { res(); });
   var queries = Array();
   queries.push('DELETE FROM ranking');
-  queries.push('INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter,COUNT(presenter)*3 as score, Ncharacter FROM posts GROUP BY presenter)p ON DUPLICATE KEY UPDATE score = p.score');
-  queries.push('INSERT INTO ranking(name, Ncharacter, score) select name, Ncharacter, score from (select name, count(name) as score, Ncharacter from followerInfo group by name, Ncharacter)f ON DUPLICATE KEY UPDATE score = f.score');
+  //queries.push('INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter,COUNT(presenter)*5 as score, Ncharacter FROM posts GROUP BY presenter)p ON DUPLICATE KEY UPDATE score = p.score');
+  queries.push('INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter, 5 as score, Ncharacter FROM posts)p ON DUPLICATE KEY UPDATE score = p.score');
+  queries.push('INSERT INTO ranking(name, Ncharacter, score) select name, Ncharacter, score from (select name, count(name) as score, Ncharacter from followerInfo group by name, Ncharacter)f');
   for(var i = 0; i < 3; i++) {
     p = p.then(sendQuery(queries[i]));
   } 
