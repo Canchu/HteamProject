@@ -43,6 +43,19 @@ router.post('/', function(req, res){
   //console.log(presenterNames);
   //-----------------//
 
+ //--投票したキャラクター名の抽出----//
+  var characterHTML = HTMLtext.match(/#(([^\x01-\x7E])*<br>)/g);
+  var characterNames = Array();
+  characterHTML.forEach(function pushName(element, index, array){
+      var name = element.match(/([^\x01-\x7E]).*([^\x01-\x7E])/)[0];
+      console.log(name);
+      if(name == undefined){
+        res.render('error', { message: 'presenter null' });
+        return;
+      }
+      characterNames.push(name);
+  });
+
   //----いいねした人と数の抽出-----//
   var likeNamesHTML = HTMLtext.match(/<a href="\?ps=tweet-good-members\&amp;id=\d{4}[\s\S]*?(<\/li)/g);
   var likeNamesString = Array();
@@ -67,14 +80,14 @@ router.post('/', function(req, res){
   	var charaJson = new Object();
     var cnt = 0;
   	charaJson['time'] = timesString[i];
-  	charaJson['character'] = 'ルイージ';
+  	charaJson['character'] = characterNames[i];
   	charaJson['presenter'] = presenterNames[i];
     charaJson['follower'] = likeName[charaJson['time']];
     if(charaJson['follower'] != undefined) cnt = charaJson['follower'].length;
     charaJson['followercnt'] = cnt;
     charaJsons.push(charaJson);
   }
-   //console.log(charaJsons);
+  // console.log(charaJsons);
 
   //---------------------DB操作----------------------------//
   var p = new Promise(function(res) { res(); });
@@ -83,10 +96,13 @@ router.post('/', function(req, res){
     p = p.then(makePromiseFunc(i, charaJsons));
   } 
   //キャラスコアテーブルの更新→いいねテーブルの更新→ランキングテーブルの更新
-  p.then(updateCharacterScore).then(updateFollowerInfo(charaJsons)).then(updateRanking);
-  p.then(function(){
+  p = p.then(updateCharacterScore);
+  p = p.then(updateFollowerInfo(charaJsons));
+  p = p.then(updateRanking);
+  p.then(
+    function(){
      //console.log("Done");
-     res.render('index', { title: 'Express' });
+     res.render('rankingView');
   });
   //-----------------------//
 });
@@ -99,9 +115,10 @@ function makePromiseFunc(index, charaJsons){
          pool.query(searchTimeQuery, function (err, rows) {
            if (err) return next(err);
 
-           if(rows.length>0){ //既にDBに入っているときいいねを更新するだけ
-             query = 'update posts set follower="%s",followerCnt ="%d" where time = "%t"';
+           if(rows.length>0){ //既にDBに入っているときいいねとキャラを更新するだけ
+             query = 'update posts set Ncharacter = "%c", follower="%s", followerCnt ="%d" where time = "%t"';
              query = query.replace(/%t/, time);
+             query = query.replace(/%c/, charaJsons[index]['character']);
              query = query.replace(/%d/, charaJsons[index]['followercnt']);
              query = query.replace(/%s/, charaJsons[index]['follower']);
            }
@@ -120,8 +137,10 @@ function makePromiseFunc(index, charaJsons){
 
 //キャラスコアテーブルの更新
 function updateCharacterScore(){
-  　var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*3 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
-  　sendQuery(characterQuery);
+  　var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*5 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
+    pool.query(characterQuery, function (err, rows) {
+        if (err) return next(err);
+    });
 }
 
 function updateFollowerInfo(charaJsons){
@@ -151,17 +170,27 @@ function followerPromiseFunc(idx, fidx, charaJsons){
 
 function updateRanking(){
   var p = new Promise(function(res) { res(); });
-  var resetRank = 'DELETE FROM ranking';
-  var insertP = 'INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter,COUNT(presenter)*3 as score, Ncharacter FROM posts GROUP BY presenter)p ON DUPLICATE KEY UPDATE score = p.score';
-  var insertF = 'INSERT INTO ranking(name, Ncharacter, score) select name, Ncharacter, score from (select name, count(name) as score, Ncharacter from followerInfo group by name, Ncharacter)f ON DUPLICATE KEY UPDATE score = f.score';
-  p.then(sendQuery(resetRank)).then(sendQuery(insertP)).then(sendQuery(insertF));
+  var queries = Array();
+  queries.push('DELETE FROM ranking');
+  //queries.push('INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter,COUNT(presenter)*5 as score, Ncharacter FROM posts GROUP BY presenter)p ON DUPLICATE KEY UPDATE score = p.score');
+  queries.push('INSERT INTO ranking(name, Ncharacter, score) select presenter, Ncharacter, score from (SELECT presenter, 5 as score, Ncharacter FROM posts)p ON DUPLICATE KEY UPDATE score = p.score');
+  queries.push('INSERT INTO ranking(name, Ncharacter, score) select name, Ncharacter, score from (select name, count(name) as score, Ncharacter from followerInfo group by name, Ncharacter)f');
+  for(var i = 0; i < 3; i++) {
+    p = p.then(sendQuery(queries[i]));
+  } 
+  //p.then(sendQuery(resetRank)).then(sendQuery(insertP)).then(sendQuery(insertF));
 }
 
 function sendQuery(query){
-　pool.query(query, function (err, rows) {
-    if (err) return next(err);
-    //console.log(query);
-  });
+  return function(prevValue) {
+    return new Promise(function(res, rej) {
+      pool.query(query, function (err, rows) {
+        if (err) return next(err);
+        console.log(query);
+        res();
+      });
+    });
+  };
 }
 
 module.exports = router;
