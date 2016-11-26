@@ -3,7 +3,7 @@ var mysql = require('mysql');
 var router = express.Router();
 
 var pool = mysql.createPool({
-  host: process.env.DB_HOST || 'us-cdbr-iron-east-04.cleardb.net'//'localhost',
+  host: process.env.DB_HOST || 'us-cdbr-iron-east-04.cleardb.net',//'localhost',
   user: process.env.DB_USER || 'bb51bca56ce53c', //'root',
   password: process.env.DB_PASS || 'fa07788a',//'',
   database: process.env.DB_NAME || 'heroku_a855e02c258c558'//'hteam_db'

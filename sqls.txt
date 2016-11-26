@@ -5,7 +5,7 @@ create table followerInfo(time datetime, name varchar(255), Ncharacter varchar(2
 create table ranking(name varchar(255), Ncharacter varchar(255), score int);
 
 [characterScoreつくる]
-create table posts(Ncharacter varchar(255), score int,  primary key(Ncharacter) );
+create table characterScore(Ncharacter varchar(255), score int,  primary key(Ncharacter));
 
 [postsつくる]
 create table posts(time datetime,Ncharacter varchar(255), presenter varchar(255), follower text, followerCnt int,  primary key(time) );
