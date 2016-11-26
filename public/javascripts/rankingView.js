@@ -1,6 +1,6 @@
 $(function(){
 	var json;
-    $.getJSON("http://" + location.host + "/ranking" , function(data) {
+    $.getJSON("https://" + location.host + "/ranking" , function(data) {
         json = data;
         ulObj = $("#ranking");
         var i = 0;
