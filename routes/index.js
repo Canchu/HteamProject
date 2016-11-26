@@ -44,10 +44,10 @@ router.post('/', function(req, res){
   //-----------------//
 
  //--投票したキャラクター名の抽出----//
-  var characterHTML = HTMLtext.match(/([^\x01-\x7E]).*([^\x01-\x7E])|Cardona Luis/g);
+  var characterHTML = HTMLtext.match(/#(([^\x01-\x7E])*<br>)/g);
   var characterNames = Array();
-  characterNameHTML.forEach(function pushName(element, index, array){
-      var name = element[0];
+  characterHTML.forEach(function pushName(element, index, array){
+      var name = element.match(/([^\x01-\x7E]).*([^\x01-\x7E])/)[0];
       console.log(name);
       if(name == undefined){
         res.render('error', { message: 'presenter null' });
@@ -87,7 +87,7 @@ router.post('/', function(req, res){
     charaJson['followercnt'] = cnt;
     charaJsons.push(charaJson);
   }
-   //console.log(charaJsons);
+  // console.log(charaJsons);
 
   //---------------------DB操作----------------------------//
   var p = new Promise(function(res) { res(); });
@@ -96,7 +96,10 @@ router.post('/', function(req, res){
     p = p.then(makePromiseFunc(i, charaJsons));
   } 
   //キャラスコアテーブルの更新→いいねテーブルの更新→ランキングテーブルの更新
-  p.then(updateCharacterScore).then(updateFollowerInfo(charaJsons)).then(updateRanking).then(
+  p = p.then(updateCharacterScore);
+  p = p.then(updateFollowerInfo(charaJsons));
+  p = p.then(updateRanking);
+  p.then(
     function(){
      //console.log("Done");
      res.render('rankingView');
@@ -112,9 +115,10 @@ function makePromiseFunc(index, charaJsons){
          pool.query(searchTimeQuery, function (err, rows) {
            if (err) return next(err);
 
-           if(rows.length>0){ //既にDBに入っているときいいねを更新するだけ
-             query = 'update posts set follower="%s",followerCnt ="%d" where time = "%t"';
+           if(rows.length>0){ //既にDBに入っているときいいねとキャラを更新するだけ
+             query = 'update posts set Ncharacter = "%c", follower="%s", followerCnt ="%d" where time = "%t"';
              query = query.replace(/%t/, time);
+             query = query.replace(/%c/, charaJsons[index]['character']);
              query = query.replace(/%d/, charaJsons[index]['followercnt']);
              query = query.replace(/%s/, charaJsons[index]['follower']);
            }
@@ -134,7 +138,9 @@ function makePromiseFunc(index, charaJsons){
 //キャラスコアテーブルの更新
 function updateCharacterScore(){
   　var characterQuery = "INSERT INTO characterScore (Ncharacter,score) SELECT Ncharacter, score FROM (SELECT Ncharacter, SUM(followerCnt)+COUNT(Ncharacter)*5 as score FROM posts GROUP BY Ncharacter)t ON DUPLICATE KEY UPDATE score = t.score";
-  　sendQuery(characterQuery);
+    pool.query(characterQuery, function (err, rows) {
+        if (err) return next(err);
+    });
 }
 
 function updateFollowerInfo(charaJsons){
